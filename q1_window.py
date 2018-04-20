@@ -167,7 +167,7 @@ class WindowModel(NERModel):
         feed_dict = {
             self.input_placeholder: inputs_batch,
             self.dropout_placeholder: dropout
-        } if labels_batch is not None else {
+        } if labels_batch is None else {
             self.input_placeholder: inputs_batch,
             self.dropout_placeholder: dropout,
             self.labels_placeholder: labels_batch
@@ -346,7 +346,6 @@ def test_make_windowed_data():
     sentence_labels = [[1, 2, 3]]
     data = zip(sentences, sentence_labels)
     w_data = make_windowed_data(data, start=[5,0], end=[6,0], window_size=1)
-    print(w_data)
 
     assert len(w_data) == sum(len(sentence) for sentence in sentences)
 
