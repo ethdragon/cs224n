@@ -110,6 +110,8 @@ class NERModel(Model):
                         # [features, labels]. This makes expanding tuples into arguments (* operator) handy
 
             ### YOUR CODE HERE (2-3 lines)
+            # get_minibatches actually returns a generator, which can be considered as an iterator
+            # the difference is, it will generate result upon request but not storing it in memory
             [features, labels] = minibatches(train_examples, self.config.batch_size).next()
             self.train_on_batch(sess, features, labels)
             ### END YOUR CODE
