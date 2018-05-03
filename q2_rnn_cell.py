@@ -51,7 +51,7 @@ class RNNCell(tf.nn.rnn_cell.RNNCell):
               initialization as before.
         Args:
             inputs: is the input vector of size [None, self.input_size]
-            state: is the previous state vector of size [None, self.state_size]
+            state: is the previous state vector of size [None, self._state_size]
             scope: is the name of the scope to be used when defining the variables inside.
         Returns:
             a pair of the output vector and the new state vector.
@@ -62,7 +62,17 @@ class RNNCell(tf.nn.rnn_cell.RNNCell):
         # be defined elsewhere!
         with tf.variable_scope(scope):
             ### YOUR CODE HERE (~6-10 lines)
-            pass
+            initializer = tf.contrib.layers.xavier_initializer()
+
+            W_x_shape = (self.input_size, self.state_size)
+            W_h_shape=(self.state_size, self.state_size)
+
+            W_x = tf.get_variable('W_x', shape=W_x_shape, dtype=tf.float32, initializer=initializer)
+            W_h = tf.get_variable('W_h', shape=W_h_shape, dtype=tf.float32, initializer=initializer)
+            b = tf.get_variable('b', shape=self.state_size, dtype=tf.float32, initializer=initializer)
+
+            new_state = tf.nn.sigmoid(tf.matmul(inputs, W_x) + tf.matmul(state, W_h) + b, 'h_t')
+
             ### END YOUR CODE ###
         # For an RNN , the output and state are the same (N.B. this
         # isn't true for an LSTM, though we aren't using one of those in
