@@ -103,7 +103,7 @@ class NERModel(Model):
             # Addition of progress bar will not be graded, but may help when debugging
             prog = Progbar(target=1 + int(len(train_examples) / self.config.batch_size))
 			
-			# The general idea is to loop over minibatches from train_examples, and run train_on_batch inside the loop
+            # The general idea is to loop over minibatches from train_examples, and run train_on_batch inside the loop
 			# Hint: train_examples could be a list containing the feature data and label data
 			# Read the doc for utils.get_minibatches to find out how to use it.
                         # Note that get_minibatches could either return a list, or a list of list
@@ -112,8 +112,13 @@ class NERModel(Model):
             ### YOUR CODE HERE (2-3 lines)
             # get_minibatches actually returns a generator, which can be considered as an iterator
             # the difference is, it will generate result upon request but not storing it in memory
-            [features, labels] = minibatches(train_examples, self.config.batch_size).next()
-            self.train_on_batch(sess, features, labels)
+
+            for i, batch in enumerate(minibatches(train_examples, self.config.batch_size)):
+                # q1_windown.py and q2_rnn.py has a differnt train_on_batch functions that accept different
+                # number of the arguments. It might be clear to leave the implementation to the subclass
+                loss = self.train_on_batch(sess, *batch)
+                prog.update(current=i+1, values=[('loss',loss)])
+
             ### END YOUR CODE
 
             logger.info("Evaluating on development data")
