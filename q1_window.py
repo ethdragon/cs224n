@@ -98,7 +98,7 @@ def make_windowed_data(data, start, end, window_size = 1):
          ...
          ]
     """
-    
+
     windowed_data = []
     for sentence, labels in data:
         ### YOUR CODE HERE (5-20 lines)
@@ -167,11 +167,9 @@ class WindowModel(NERModel):
         feed_dict = {
             self.input_placeholder: inputs_batch,
             self.dropout_placeholder: dropout
-        } if labels_batch is None else {
-            self.input_placeholder: inputs_batch,
-            self.dropout_placeholder: dropout,
-            self.labels_placeholder: labels_batch
         }
+        if labels_batch is not None:
+            feed_dict[self.labels_placeholder] = labels_batch
         ### END YOUR CODE
         return feed_dict
 
@@ -194,7 +192,9 @@ class WindowModel(NERModel):
         ### YOUR CODE HERE (!3-5 lines)
         embedding_tensor = tf.Variable(self.pretrained_embeddings, dtype=tf.float32)
         embedded = tf.nn.embedding_lookup(embedding_tensor, self.input_placeholder)
-        embeddings = tf.reshape(embedded, (-1, Config.n_window_features * Config.embed_size))
+        embeddings = tf.reshape(
+            embedded,
+            shape=(-1, Config.n_window_features * Config.embed_size))
         ### END YOUR CODE
         return embeddings
 
@@ -234,7 +234,8 @@ class WindowModel(NERModel):
 
         w_shape = (n_window_features * embed_size, hidden_size)
         W = tf.get_variable('weights', shape=w_shape, dtype=tf.float32, initializer=initializer)
-        b1 = tf.zeros(hidden_size)
+        b1 = tf.zeros([hidden_size,])
+        b2 = tf.zeros(n_classes)
 
         z = tf.matmul(x, W) + b1
         h = tf.nn.relu(z)
@@ -242,7 +243,6 @@ class WindowModel(NERModel):
 
         u_shape = (hidden_size, n_classes)
         U = tf.get_variable('u', shape=u_shape, dtype=tf.float32, initializer=initializer)
-        b2 = tf.zeros(n_classes)
 
         pred = tf.matmul(h_drop, U) + b2
 
