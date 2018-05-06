@@ -45,9 +45,9 @@ class Config:
     n_classes = 5
     dropout = 0.5
     embed_size = 50
-    hidden_size = 200
+    hidden_size = 300
     batch_size = 2048
-    n_epochs = 10
+    n_epochs = 40
     lr = 0.001
 
     def __init__(self, output_path=None):
@@ -263,10 +263,11 @@ class WindowModel(NERModel):
             loss: A 0-d tensor (scalar)
         """
         ### YOUR CODE HERE (~2-5 lines)
+
         ce = tf.nn.sparse_softmax_cross_entropy_with_logits(
             labels=self.labels_placeholder,
-            logits=pred)
-        loss = tf.reduce_min(ce) # can use a different function to calculate loss
+            logits=pred) # can try other loss functions
+        loss = tf.reduce_mean(ce) # reduce max also works but reduce min doesn't!!
         ### END YOUR CODE
         return loss
 
