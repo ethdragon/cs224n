@@ -43,7 +43,7 @@ class Config:
     embed_size = 50
     hidden_size = 300
     batch_size = 32
-    n_epochs = 10
+    n_epochs = 20
     max_grad_norm = 10.
     lr = 0.001
 
@@ -149,9 +149,9 @@ class RNNModel(NERModel):
         (Don't change the variable names)
         """
         ### YOUR CODE HERE (~4-6 lines)
-        input_shape = (None, self.max_length, Config.n_features)
-        labels_shape = (None, self.max_length)
-        mask_shape = (None, self.max_length)
+        input_shape = [None, self.max_length, Config.n_features]
+        labels_shape = [None, self.max_length]
+        mask_shape = [None, self.max_length]
         self.input_placeholder = tf.placeholder(dtype=tf.int32, shape=input_shape)
         self.labels_placeholder = tf.placeholder(dtype=tf.int32, shape=labels_shape)
         self.mask_placeholder = tf.placeholder(dtype=tf.bool, shape=mask_shape)
@@ -217,7 +217,7 @@ class RNNModel(NERModel):
         embeddings = tf.reshape(
             embedded_inputs,
             shape=(
-                None,
+                -1,
                 Config.max_length,
                 Config.n_features * Config.embed_size
             ))
@@ -285,23 +285,27 @@ class RNNModel(NERModel):
         initializer = tf.contrib.layers.xavier_initializer()
         U = tf.get_variable(
             name='U',
-            shape=(Config.hidden_size, Config.batch_size),
+            shape=(Config.hidden_size, Config.n_classes),
             dtype=tf.float32,
             initializer=initializer
         )
         b2 = tf.get_variable(
             name='b2',
-            shape=Config.batch_size,
+            shape=Config.n_classes,
             dtype=tf.float32,
             initializer=initializer
         )
-        h = tf.zeros(Config.hidden_size)
+
+        input_shape = tf.shape(x)
+        h = tf.zeros((input_shape[0], Config.hidden_size))
         ### END YOUR CODE
 
-        with tf.variable_scope("RNN"):
+        with tf.variable_scope("RNN") as scope:
             for time_step in range(self.max_length):
                 ### YOUR CODE HERE (~6-10 lines)
                 out_put, h = cell(x[:, time_step, :], h)
+
+                scope.reuse_variables() # h is re-used, allow reuse var here
                 out_dropped = tf.nn.dropout(out_put, dropout_rate)
                 pred = tf.matmul(out_dropped, U) + b2
                 preds.append(pred)
@@ -331,10 +335,11 @@ class RNNModel(NERModel):
             loss: A 0-d tensor (scalar)
         """
         ### YOUR CODE HERE (~2-4 lines)
-        loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-            labels=self.labels_placeholder,
-            logits=preds
+        ce = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=tf.boolean_mask(self.labels_placeholder, self.mask_placeholder),
+            logits=tf.boolean_mask(preds, self.mask_placeholder)
         )
+        loss = tf.reduce_mean(ce)
         ### END YOUR CODE
         return loss
 
@@ -358,7 +363,7 @@ class RNNModel(NERModel):
             train_op: The Op for training.
         """
         ### YOUR CODE HERE (~1-2 lines)
-        optimizer = tf.train.AdamOptimizer()
+        optimizer = tf.train.AdamOptimizer(Config.lr)
         train_op = optimizer.minimize(loss=loss)
         ### END YOUR CODE
         return train_op
